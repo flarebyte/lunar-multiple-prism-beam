@@ -13,6 +13,8 @@ model:
       - Mask objects
     links:
       - "[Npm dependencies](DEPENDENCIES.md)"
+    tags:
+      - image-hero
   github:
     account: flarebyte
     name: lunar-multiple-prism-beam
