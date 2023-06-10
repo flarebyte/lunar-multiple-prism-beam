@@ -13,8 +13,16 @@ const getAsPrismBeamPathValueOrNot =
     return isSimplePrimitive(value) ? {path, value} : undefined;
   };
 
-const getEntityAsPathObject = (
+export const entityToPathValueList = (
   entity: PrismBeamBaseEntity,
   paths: string[]
 ): PrismBeamPathValue[] =>
   paths.map(getAsPrismBeamPathValueOrNot(entity)).filter(isPrismBeamBaseEntity);
+
+export const pathValueListToEntity = (
+  id: string,
+  pathValueList: PrismBeamPathValue[]
+): PrismBeamBaseEntity => {
+  const entity: PrismBeamBaseEntity = {id};
+  return entity;
+};
