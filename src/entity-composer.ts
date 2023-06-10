@@ -32,6 +32,13 @@ type ComposeEntityOpts =
       id: string;
       first: MaskedEntity;
       second: MaskedEntity;
+    }
+  | {
+      kind: 'triple';
+      id: string;
+      first: MaskedEntity;
+      second: MaskedEntity;
+      third: MaskedEntity;
     };
 
 export const composeEntity = (
@@ -43,7 +50,11 @@ export const composeEntity = (
     }
 
     case 'pair': {
-      return composeProtectedEntity(opts);
+      return composePairEntity(opts);
+    }
+
+    case 'triple': {
+      return composeTripleEntity(opts);
     }
 
     default: {
@@ -80,7 +91,7 @@ const composeSingleEntity = (
   return succeed(composedEntity);
 };
 
-const composeProtectedEntity = (
+const composePairEntity = (
   opts: ComposeEntityOpts & {kind: 'pair'}
 ): Result<PrismBeamBaseEntity, PrismBeamError> => {
   const {id, first, second} = opts;
@@ -128,6 +139,78 @@ const composeProtectedEntity = (
   const composedEntity = pathValueListToEntity(id, [
     ...firstPathValueList,
     ...secondPathValueList,
+  ]);
+  return succeed(composedEntity);
+};
+
+const composeTripleEntity = (
+  opts: ComposeEntityOpts & {kind: 'triple'}
+): Result<PrismBeamBaseEntity, PrismBeamError> => {
+  const {id, first, second, third} = opts;
+  const firstPaths = getEntityPaths(first.entity);
+  const secondPaths = getEntityPaths(second.entity);
+  const thirdPaths = getEntityPaths(third.entity);
+  if (
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
+  ) {
+    return failWith({
+      step: 'compose/first/supported',
+      message:
+        'The first entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    second.paths.supported &&
+    !arePathsInAllowList(second.paths.supported, secondPaths)
+  ) {
+    return failWith({
+      step: 'compose/second/supported',
+      message:
+        'The second entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    third.paths.supported &&
+    !arePathsInAllowList(third.paths.supported, thirdPaths)
+  ) {
+    return failWith({
+      step: 'compose/third/supported',
+      message:
+        'The third entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
+  );
+
+  const secondAllowedPaths = secondPaths.filter(
+    keepPathInAllowList(second.paths.allowed)
+  );
+  const thirdAllowedPaths = thirdPaths.filter(
+    keepPathInAllowList(third.paths.allowed)
+  );
+
+  const firstPathValueList = entityToPathValueList(
+    first.entity,
+    firstAllowedPaths
+  );
+
+  const secondPathValueList = entityToPathValueList(
+    second.entity,
+    secondAllowedPaths
+  );
+  const thirdPathValueList = entityToPathValueList(
+    third.entity,
+    thirdAllowedPaths
+  );
+  const composedEntity = pathValueListToEntity(id, [
+    ...firstPathValueList,
+    ...secondPathValueList,
+    ...thirdPathValueList,
   ]);
   return succeed(composedEntity);
 };
