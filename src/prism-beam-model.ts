@@ -42,7 +42,19 @@ const action = z.object({
 
 export const entity = z.object({
   id: stringFields.string1To140,
-  _actions: z.array(action).min(1).optional(),
 });
 
-export type PrismBeamEntity = z.infer<typeof entity>;
+export const actionable = z.object({
+  _actions: z.array(action).nonempty().optional(),
+});
+
+const pathValue = z.object({
+  path: stringFields.string1To200,
+  value: z.union([z.string(), z.number(), z.boolean()]),
+});
+
+export type PrismBeamBaseEntity = z.infer<typeof entity>;
+
+export type PrismBeamAction = z.infer<typeof action>;
+
+export type PrismBeamPathValue = z.infer<typeof pathValue>;

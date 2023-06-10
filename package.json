@@ -44,6 +44,7 @@
     "spec": "node --loader ts-node/esm .baldrick-zest.ts"
   },
   "dependencies": {
+    "dot-prop": "^8.0.0",
     "faora-kai": "^0.1.0",
     "zod": "^3.21.4"
   },
