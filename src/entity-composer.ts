@@ -17,6 +17,7 @@ import {
 
 type MaskedEntity = {
   entity: PrismBeamBaseEntity;
+  schema: ZodSchema;
   paths: {
     supported?: Set<string>;
     allowed: Set<string>;
@@ -84,12 +85,23 @@ const composeSingleEntity = <M extends Record<string, unknown>>(
     });
   }
 
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'single/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
   const firstAllowedPaths = firstPaths.filter(
     keepPathInAllowList(first.paths.allowed)
   );
 
   const firstPathValueList = entityToPathValueList(
-    first.entity,
+    firstEntityResult.value,
     firstAllowedPaths
   );
   const composedEntity = pathValueListToEntity(id, firstPathValueList);

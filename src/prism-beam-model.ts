@@ -68,8 +68,14 @@ export type PrismBeamError =
   | {
       step:
         | 'single/validate-output'
+        | 'single/validate-first-entity'
         | 'pair/validate-output'
-        | 'triple/validate-output';
+        | 'pair/validate-first-entity'
+        | 'pair/validate-second-entity'
+        | 'triple/validate-output'
+        | 'triple/validate-first-entity'
+        | 'triple/validate-second-entity'
+        | 'triple/validate-third-entity';
       errors: ValidationError[];
     }
   | {
