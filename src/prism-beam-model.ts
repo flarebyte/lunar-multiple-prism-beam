@@ -66,7 +66,10 @@ type ValidationError = {
 /** An error that could be returned by lunar multiple prism error */
 export type PrismBeamError =
   | {
-      step: 'sign-id/validate-payload' | 'verify-id/validate-payload';
+      step:
+        | 'single/validate-output'
+        | 'pair/validate-output'
+        | 'triple/validate-output';
       errors: ValidationError[];
     }
   | {

@@ -1,4 +1,6 @@
 import {type Result, succeed, failWith} from 'fairlie-functional';
+import {type ZodSchema} from 'zod';
+import {safeParse} from 'faora-kai';
 import {
   type PrismBeamBaseEntity,
   type PrismBeamError,
@@ -26,12 +28,14 @@ type ComposeEntityOpts =
       kind: 'single';
       id: string;
       first: MaskedEntity;
+      schema: ZodSchema;
     }
   | {
       kind: 'pair';
       id: string;
       first: MaskedEntity;
       second: MaskedEntity;
+      schema: ZodSchema;
     }
   | {
       kind: 'triple';
@@ -39,22 +43,23 @@ type ComposeEntityOpts =
       first: MaskedEntity;
       second: MaskedEntity;
       third: MaskedEntity;
+      schema: ZodSchema;
     };
 
-export const composeEntity = (
+export const composeEntity = <M extends Record<string, unknown>>(
   opts: ComposeEntityOpts
-): Result<PrismBeamBaseEntity, PrismBeamError> => {
+): Result<M, PrismBeamError> => {
   switch (opts.kind) {
     case 'single': {
-      return composeSingleEntity(opts);
+      return composeSingleEntity<M>(opts);
     }
 
     case 'pair': {
-      return composePairEntity(opts);
+      return composePairEntity<M>(opts);
     }
 
     case 'triple': {
-      return composeTripleEntity(opts);
+      return composeTripleEntity<M>(opts);
     }
 
     default: {
@@ -63,10 +68,10 @@ export const composeEntity = (
   }
 };
 
-const composeSingleEntity = (
+const composeSingleEntity = <M extends Record<string, unknown>>(
   opts: ComposeEntityOpts & {kind: 'single'}
-): Result<PrismBeamBaseEntity, PrismBeamError> => {
-  const {id, first} = opts;
+): Result<M, PrismBeamError> => {
+  const {id, first, schema} = opts;
   const firstPaths = getEntityPaths(first.entity);
   if (
     first.paths.supported &&
@@ -88,13 +93,24 @@ const composeSingleEntity = (
     firstAllowedPaths
   );
   const composedEntity = pathValueListToEntity(id, firstPathValueList);
-  return succeed(composedEntity);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'single/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
 };
 
-const composePairEntity = (
+const composePairEntity = <M extends Record<string, unknown>>(
   opts: ComposeEntityOpts & {kind: 'pair'}
-): Result<PrismBeamBaseEntity, PrismBeamError> => {
-  const {id, first, second} = opts;
+): Result<M, PrismBeamError> => {
+  const {id, schema, first, second} = opts;
   const firstPaths = getEntityPaths(first.entity);
   const secondPaths = getEntityPaths(second.entity);
   if (
@@ -140,13 +156,24 @@ const composePairEntity = (
     ...firstPathValueList,
     ...secondPathValueList,
   ]);
-  return succeed(composedEntity);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
 };
 
-const composeTripleEntity = (
+const composeTripleEntity = <M extends Record<string, unknown>>(
   opts: ComposeEntityOpts & {kind: 'triple'}
-): Result<PrismBeamBaseEntity, PrismBeamError> => {
-  const {id, first, second, third} = opts;
+): Result<M, PrismBeamError> => {
+  const {id, schema, first, second, third} = opts;
   const firstPaths = getEntityPaths(first.entity);
   const secondPaths = getEntityPaths(second.entity);
   const thirdPaths = getEntityPaths(third.entity);
@@ -212,5 +239,16 @@ const composeTripleEntity = (
     ...secondPathValueList,
     ...thirdPathValueList,
   ]);
-  return succeed(composedEntity);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
 };
