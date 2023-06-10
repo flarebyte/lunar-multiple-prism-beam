@@ -1,4 +1,4 @@
-import {getProperty} from 'dot-prop';
+import {getProperty, setProperty} from 'dot-prop';
 import {
   type PrismBeamPathValue,
   type PrismBeamBaseEntity,
@@ -24,5 +24,13 @@ export const pathValueListToEntity = (
   pathValueList: PrismBeamPathValue[]
 ): PrismBeamBaseEntity => {
   const entity: PrismBeamBaseEntity = {id};
+  for (const {path, value} of pathValueList) {
+    if (path === 'id') {
+      continue;
+    }
+
+    setProperty(entity, path, value);
+  }
+
   return entity;
 };
