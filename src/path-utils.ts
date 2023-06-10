@@ -9,12 +9,13 @@ const isSafePath = (path: string): boolean =>
 const normalizePath = (path: string): string =>
   path.replaceAll(/(\[\d{1,4}])/g, '*');
 
-export const arePathsInAllowList =
-  (allowList: Set<string>) =>
-  (actual: string[]): boolean =>
-    !actual.some(
-      (path) => !isSafePath(path) || !allowList.has(normalizePath(path))
-    );
+export const arePathsInAllowList = (
+  allowList: Set<string>,
+  actual: string[]
+): boolean =>
+  !actual.some(
+    (path) => !isSafePath(path) || !allowList.has(normalizePath(path))
+  );
 
 export const keepPathInAllowList =
   (allowList: Set<string>) =>

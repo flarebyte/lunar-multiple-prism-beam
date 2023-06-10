@@ -15,8 +15,10 @@ import {
 
 type MaskedEntity = {
   entity: PrismBeamBaseEntity;
-  supportedPaths: Set<string>;
-  allowedPaths: Set<string>;
+  paths: {
+    supported?: Set<string>;
+    allowed: Set<string>;
+  };
 };
 
 type ComposeEntityOpts =
@@ -45,7 +47,7 @@ export const composeEntity = (
     }
 
     default: {
-      return failWith({step: 'compose', message: 'Unknown options'});
+      return failWith({step: 'compose', message: 'Unknown kind options'});
     }
   }
 };
@@ -55,7 +57,10 @@ const composeSingleEntity = (
 ): Result<PrismBeamBaseEntity, PrismBeamError> => {
   const {id, main} = opts;
   const mainPaths = getEntityPaths(main.entity);
-  if (!arePathsInAllowList(main.supportedPaths)(mainPaths)) {
+  if (
+    main.paths.supported &&
+    !arePathsInAllowList(main.paths.supported, mainPaths)
+  ) {
     return failWith({
       step: 'compose/main/supported',
       message: 'The main entity has paths that are not supported',
@@ -63,7 +68,7 @@ const composeSingleEntity = (
   }
 
   const mainAllowedPaths = mainPaths.filter(
-    keepPathInAllowList(main.allowedPaths)
+    keepPathInAllowList(main.paths.allowed)
   );
 
   const mainPathValueList = entityToPathValueList(
