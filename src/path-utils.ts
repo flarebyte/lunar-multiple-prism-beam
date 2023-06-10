@@ -4,7 +4,7 @@ import {type PrismBeamBaseEntity} from './prism-beam-model.js';
 export const getEntityPaths = (entity: PrismBeamBaseEntity) => deepKeys(entity);
 
 const isSafePath = (path: string): boolean =>
-  /^\w+(\[\d+])?(\.\w+(\[\d+])?)*$/.test(path);
+  /^\w+(\[\d{1,4}])?(\.\w+(\[\d{1,4}])?)*$/.test(path);
 
 export const arePathsInAllowList =
   (allowList: Set<string>) =>
