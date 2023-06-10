@@ -25,13 +25,13 @@ type ComposeEntityOpts =
   | {
       kind: 'single';
       id: string;
-      main: MaskedEntity;
+      first: MaskedEntity;
     }
   | {
-      kind: 'protected';
+      kind: 'pair';
       id: string;
-      main: MaskedEntity;
-      protected: MaskedEntity;
+      first: MaskedEntity;
+      second: MaskedEntity;
     };
 
 export const composeEntity = (
@@ -42,7 +42,7 @@ export const composeEntity = (
       return composeSingleEntity(opts);
     }
 
-    case 'protected': {
+    case 'pair': {
       return composeProtectedEntity(opts);
     }
 
@@ -55,32 +55,79 @@ export const composeEntity = (
 const composeSingleEntity = (
   opts: ComposeEntityOpts & {kind: 'single'}
 ): Result<PrismBeamBaseEntity, PrismBeamError> => {
-  const {id, main} = opts;
-  const mainPaths = getEntityPaths(main.entity);
+  const {id, first} = opts;
+  const firstPaths = getEntityPaths(first.entity);
   if (
-    main.paths.supported &&
-    !arePathsInAllowList(main.paths.supported, mainPaths)
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
   ) {
     return failWith({
-      step: 'compose/main/supported',
-      message: 'The main entity has paths that are not supported',
+      step: 'compose/first/supported',
+      message:
+        'The entity has paths that are not supported; this is suspicious and should be investigated',
     });
   }
 
-  const mainAllowedPaths = mainPaths.filter(
-    keepPathInAllowList(main.paths.allowed)
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
   );
 
-  const mainPathValueList = entityToPathValueList(
-    main.entity,
-    mainAllowedPaths
+  const firstPathValueList = entityToPathValueList(
+    first.entity,
+    firstAllowedPaths
   );
-  const composedEntity = pathValueListToEntity(id, mainPathValueList);
+  const composedEntity = pathValueListToEntity(id, firstPathValueList);
   return succeed(composedEntity);
 };
 
 const composeProtectedEntity = (
-  opts: ComposeEntityOpts & {kind: 'protected'}
+  opts: ComposeEntityOpts & {kind: 'pair'}
 ): Result<PrismBeamBaseEntity, PrismBeamError> => {
-  return succeed({id: 'id123'});
+  const {id, first, second} = opts;
+  const firstPaths = getEntityPaths(first.entity);
+  const secondPaths = getEntityPaths(second.entity);
+  if (
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
+  ) {
+    return failWith({
+      step: 'compose/first/supported',
+      message:
+        'The first entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    second.paths.supported &&
+    !arePathsInAllowList(second.paths.supported, secondPaths)
+  ) {
+    return failWith({
+      step: 'compose/second/supported',
+      message:
+        'The second entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
+  );
+
+  const secondAllowedPaths = secondPaths.filter(
+    keepPathInAllowList(second.paths.allowed)
+  );
+
+  const firstPathValueList = entityToPathValueList(
+    first.entity,
+    firstAllowedPaths
+  );
+
+  const secondPathValueList = entityToPathValueList(
+    second.entity,
+    secondAllowedPaths
+  );
+  const composedEntity = pathValueListToEntity(id, [
+    ...firstPathValueList,
+    ...secondPathValueList,
+  ]);
+  return succeed(composedEntity);
 };

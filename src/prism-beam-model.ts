@@ -70,7 +70,11 @@ export type PrismBeamError =
       errors: ValidationError[];
     }
   | {
-      step: 'compose' | 'compose/main/supported';
+      step:
+        | 'compose'
+        | 'compose/first/supported'
+        | 'compose/second/supported'
+        | 'compose/third/supported';
 
       message: string;
       finalMessage?: string;
