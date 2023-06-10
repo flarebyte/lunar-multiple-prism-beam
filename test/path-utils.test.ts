@@ -7,8 +7,13 @@ const checkAbc = arePathsInAllowList(new Set(['a.b.c', 'f.g.h', 'f.i*.a.b']));
 test('arePathsInAllowList should accept expected path', () => {
   assert.ok(checkAbc(['f.g.h']), 'fgh');
   assert.ok(checkAbc(['f.g.h', 'a.b.c']), 'fgh and abc');
+  assert.ok(
+    checkAbc(['a.b.c', 'f.i[6].a.b', 'f.i[999].a.b', 'f.i[9999].a.b']),
+    'fgh and abc'
+  );
 });
 
 test('arePathsInAllowList should not accept bad paths', () => {
-  assert.equal(checkAbc(['wrong.path']), false, 'wrong path');
+  assert.equal(checkAbc(['a.b.c', 'wrong.path']), false, 'wrong path');
+  assert.equal(checkAbc(['a.b.c', 'f.i*.a.b']), false, 'no * in path');
 });

@@ -6,7 +6,12 @@ export const getEntityPaths = (entity: PrismBeamBaseEntity) => deepKeys(entity);
 const isSafePath = (path: string): boolean =>
   /^\w+(\[\d{1,4}])?(\.\w+(\[\d{1,4}])?)*$/.test(path);
 
+const normalizePath = (path: string): string =>
+  path.replaceAll(/(\[\d{1,4}])/g, '*');
+
 export const arePathsInAllowList =
   (allowList: Set<string>) =>
   (actual: string[]): boolean =>
-    !actual.some((path) => isSafePath(path) && !allowList.has(path));
+    !actual.some(
+      (path) => isSafePath(path) && !allowList.has(normalizePath(path))
+    );
