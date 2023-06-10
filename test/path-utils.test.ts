@@ -15,5 +15,6 @@ test('arePathsInAllowList should accept expected path', () => {
 
 test('arePathsInAllowList should not accept bad paths', () => {
   assert.equal(checkAbc(['a.b.c', 'wrong.path']), false, 'wrong path');
+  assert.equal(checkAbc(['a.b.c', 'unsafe path']), false, 'path with space');
   assert.equal(checkAbc(['a.b.c', 'f.i*.a.b']), false, 'no * in path');
 });

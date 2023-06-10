@@ -13,5 +13,5 @@ export const arePathsInAllowList =
   (allowList: Set<string>) =>
   (actual: string[]): boolean =>
     !actual.some(
-      (path) => isSafePath(path) && !allowList.has(normalizePath(path))
+      (path) => !isSafePath(path) || !allowList.has(normalizePath(path))
     );
