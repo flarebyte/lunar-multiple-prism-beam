@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "dot-prop": "^8.0.0",
+    "fairlie-functional": "^0.1.0",
     "faora-kai": "^0.1.0",
     "zod": "^3.21.4"
   },

@@ -58,3 +58,20 @@ export type PrismBeamBaseEntity = z.infer<typeof entity>;
 export type PrismBeamAction = z.infer<typeof action>;
 
 export type PrismBeamPathValue = z.infer<typeof pathValue>;
+type ValidationError = {
+  message: string;
+  path: string;
+};
+
+/** An error that could be returned by lunar multiple prism error */
+export type PrismBeamError =
+  | {
+      step: 'sign-id/validate-payload' | 'verify-id/validate-payload';
+      errors: ValidationError[];
+    }
+  | {
+      step: 'compose' | 'compose/main/supported';
+
+      message: string;
+      finalMessage?: string;
+    };

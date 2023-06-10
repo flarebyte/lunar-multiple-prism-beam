@@ -1138,6 +1138,11 @@ execa@^5.1.1:
     signal-exit "^3.0.3"
     strip-final-newline "^2.0.0"
 
+fairlie-functional@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/fairlie-functional/-/fairlie-functional-0.1.0.tgz#0bce2420c2b09519ccbc48efb2949a4379b6279b"
+  integrity sha512-vbTx9k+0xjiJz0ezzi1JO41iYLI/G6QudORJ8HX8CzfR2nXvId4PGTQr7WiRzEx7wnwLcppa/RlNKHhTNVF/rg==
+
 faora-kai@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/faora-kai/-/faora-kai-0.1.0.tgz#220a76d18092a56cd5848ac1471e5e8dda023c23"
