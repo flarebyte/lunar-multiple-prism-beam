@@ -2,8 +2,10 @@ import {type Result, succeed, failWith} from 'fairlie-functional';
 import {type ZodSchema} from 'zod';
 import {safeParse} from 'faora-kai';
 import {
+  type PrismBeamPairEntity,
   type PrismBeamBaseEntity,
   type PrismBeamError,
+  type PrismBeamTripleEntity,
 } from './prism-beam-model.js';
 import {
   arePathsInAllowList,
@@ -16,7 +18,6 @@ import {
 } from './path-value-utils.js';
 
 type MaskedEntity = {
-  entity: PrismBeamBaseEntity;
   schema: ZodSchema;
   paths: {
     supported?: Set<string>;
@@ -24,56 +25,29 @@ type MaskedEntity = {
   };
 };
 
-type ComposeEntityOpts =
-  | {
-      kind: 'single';
-      id: string;
-      first: MaskedEntity;
-      schema: ZodSchema;
-    }
-  | {
-      kind: 'pair';
-      id: string;
-      first: MaskedEntity;
-      second: MaskedEntity;
-      schema: ZodSchema;
-    }
-  | {
-      kind: 'triple';
-      id: string;
-      first: MaskedEntity;
-      second: MaskedEntity;
-      third: MaskedEntity;
-      schema: ZodSchema;
-    };
-
-export const composeEntity = <M extends Record<string, unknown>>(
-  opts: ComposeEntityOpts
-): Result<M, PrismBeamError> => {
-  switch (opts.kind) {
-    case 'single': {
-      return composeSingleEntity<M>(opts);
-    }
-
-    case 'pair': {
-      return composePairEntity<M>(opts);
-    }
-
-    case 'triple': {
-      return composeTripleEntity<M>(opts);
-    }
-
-    default: {
-      return failWith({step: 'compose', message: 'Unknown kind options'});
-    }
-  }
+type ComposeSingleEntityOpts = {
+  first: MaskedEntity;
+  schema: ZodSchema;
+};
+type ComposePairEntityOpts = {
+  first: MaskedEntity;
+  second: MaskedEntity;
+  schema: ZodSchema;
 };
 
-const composeSingleEntity = <M extends Record<string, unknown>>(
-  opts: ComposeEntityOpts & {kind: 'single'}
+type ComposeTripleEntityOpts = {
+  first: MaskedEntity;
+  second: MaskedEntity;
+  third: MaskedEntity;
+  schema: ZodSchema;
+};
+
+export const composeSingleEntity = <M extends Record<string, unknown>>(
+  entity: PrismBeamBaseEntity,
+  opts: ComposeSingleEntityOpts
 ): Result<M, PrismBeamError> => {
-  const {id, first, schema} = opts;
-  const firstPaths = getEntityPaths(first.entity);
+  const {first, schema} = opts;
+  const firstPaths = getEntityPaths(entity);
   if (
     first.paths.supported &&
     !arePathsInAllowList(first.paths.supported, firstPaths)
@@ -85,7 +59,7 @@ const composeSingleEntity = <M extends Record<string, unknown>>(
     });
   }
 
-  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entity, {
     schema: first.schema,
     formatting: 'privacy-first',
   });
@@ -104,7 +78,7 @@ const composeSingleEntity = <M extends Record<string, unknown>>(
     firstEntityResult.value,
     firstAllowedPaths
   );
-  const composedEntity = pathValueListToEntity(id, firstPathValueList);
+  const composedEntity = pathValueListToEntity(entity.id, firstPathValueList);
   const composedEntityResult = safeParse<M>(composedEntity, {
     schema,
     formatting: 'privacy-first',
@@ -119,12 +93,13 @@ const composeSingleEntity = <M extends Record<string, unknown>>(
   return succeed(composedEntityResult.value);
 };
 
-const composePairEntity = <M extends Record<string, unknown>>(
-  opts: ComposeEntityOpts & {kind: 'pair'}
+export const composeEntityPair = <M extends Record<string, unknown>>(
+  entities: PrismBeamPairEntity,
+  opts: ComposePairEntityOpts
 ): Result<M, PrismBeamError> => {
-  const {id, schema, first, second} = opts;
-  const firstPaths = getEntityPaths(first.entity);
-  const secondPaths = getEntityPaths(second.entity);
+  const {schema, first, second} = opts;
+  const firstPaths = getEntityPaths(entities.first);
+  const secondPaths = getEntityPaths(entities.second);
   if (
     first.paths.supported &&
     !arePathsInAllowList(first.paths.supported, firstPaths)
@@ -147,7 +122,7 @@ const composePairEntity = <M extends Record<string, unknown>>(
     });
   }
 
-  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entities.first, {
     schema: first.schema,
     formatting: 'privacy-first',
   });
@@ -162,7 +137,7 @@ const composePairEntity = <M extends Record<string, unknown>>(
     keepPathInAllowList(first.paths.allowed)
   );
 
-  const secondEntityResult = safeParse<PrismBeamBaseEntity>(second.entity, {
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(entities.second, {
     schema: second.schema,
     formatting: 'privacy-first',
   });
@@ -186,7 +161,7 @@ const composePairEntity = <M extends Record<string, unknown>>(
     secondEntityResult.value,
     secondAllowedPaths
   );
-  const composedEntity = pathValueListToEntity(id, [
+  const composedEntity = pathValueListToEntity(entities.first.id, [
     ...firstPathValueList,
     ...secondPathValueList,
   ]);
@@ -204,13 +179,14 @@ const composePairEntity = <M extends Record<string, unknown>>(
   return succeed(composedEntityResult.value);
 };
 
-const composeTripleEntity = <M extends Record<string, unknown>>(
-  opts: ComposeEntityOpts & {kind: 'triple'}
+export const composeEntityTriple = <M extends Record<string, unknown>>(
+  entities: PrismBeamTripleEntity,
+  opts: ComposeTripleEntityOpts
 ): Result<M, PrismBeamError> => {
-  const {id, schema, first, second, third} = opts;
-  const firstPaths = getEntityPaths(first.entity);
-  const secondPaths = getEntityPaths(second.entity);
-  const thirdPaths = getEntityPaths(third.entity);
+  const {schema, first, second, third} = opts;
+  const firstPaths = getEntityPaths(entities.first);
+  const secondPaths = getEntityPaths(entities.second);
+  const thirdPaths = getEntityPaths(entities.third);
   if (
     first.paths.supported &&
     !arePathsInAllowList(first.paths.supported, firstPaths)
@@ -244,7 +220,7 @@ const composeTripleEntity = <M extends Record<string, unknown>>(
     });
   }
 
-  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entities.first, {
     schema: first.schema,
     formatting: 'privacy-first',
   });
@@ -259,7 +235,7 @@ const composeTripleEntity = <M extends Record<string, unknown>>(
     keepPathInAllowList(first.paths.allowed)
   );
 
-  const secondEntityResult = safeParse<PrismBeamBaseEntity>(second.entity, {
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(entities.second, {
     schema: second.schema,
     formatting: 'privacy-first',
   });
@@ -274,7 +250,7 @@ const composeTripleEntity = <M extends Record<string, unknown>>(
     keepPathInAllowList(second.paths.allowed)
   );
 
-  const thirdEntityResult = safeParse<PrismBeamBaseEntity>(third.entity, {
+  const thirdEntityResult = safeParse<PrismBeamBaseEntity>(entities.third, {
     schema: third.schema,
     formatting: 'privacy-first',
   });
@@ -302,7 +278,7 @@ const composeTripleEntity = <M extends Record<string, unknown>>(
     thirdEntityResult.value,
     thirdAllowedPaths
   );
-  const composedEntity = pathValueListToEntity(id, [
+  const composedEntity = pathValueListToEntity(entities.first.id, [
     ...firstPathValueList,
     ...secondPathValueList,
     ...thirdPathValueList,

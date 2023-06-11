@@ -55,6 +55,17 @@ const pathValue = z.object({
 
 export type PrismBeamBaseEntity = z.infer<typeof entity>;
 
+export type PrismBeamPairEntity = {
+  first: PrismBeamBaseEntity;
+  second: PrismBeamBaseEntity;
+};
+
+export type PrismBeamTripleEntity = {
+  first: PrismBeamBaseEntity;
+  second: PrismBeamBaseEntity;
+  third: PrismBeamBaseEntity;
+};
+
 export type PrismBeamAction = z.infer<typeof action>;
 
 export type PrismBeamPathValue = z.infer<typeof pathValue>;
