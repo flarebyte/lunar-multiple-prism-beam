@@ -147,21 +147,43 @@ const composePairEntity = <M extends Record<string, unknown>>(
     });
   }
 
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
   const firstAllowedPaths = firstPaths.filter(
     keepPathInAllowList(first.paths.allowed)
   );
+
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(second.entity, {
+    schema: second.schema,
+    formatting: 'privacy-first',
+  });
+  if (secondEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-second-entity',
+      errors: secondEntityResult.error,
+    });
+  }
 
   const secondAllowedPaths = secondPaths.filter(
     keepPathInAllowList(second.paths.allowed)
   );
 
   const firstPathValueList = entityToPathValueList(
-    first.entity,
+    firstEntityResult.value,
     firstAllowedPaths
   );
 
   const secondPathValueList = entityToPathValueList(
-    second.entity,
+    secondEntityResult.value,
     secondAllowedPaths
   );
   const composedEntity = pathValueListToEntity(id, [
@@ -222,28 +244,62 @@ const composeTripleEntity = <M extends Record<string, unknown>>(
     });
   }
 
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(first.entity, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
   const firstAllowedPaths = firstPaths.filter(
     keepPathInAllowList(first.paths.allowed)
   );
 
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(second.entity, {
+    schema: second.schema,
+    formatting: 'privacy-first',
+  });
+  if (secondEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-second-entity',
+      errors: secondEntityResult.error,
+    });
+  }
+
   const secondAllowedPaths = secondPaths.filter(
     keepPathInAllowList(second.paths.allowed)
   );
+
+  const thirdEntityResult = safeParse<PrismBeamBaseEntity>(third.entity, {
+    schema: third.schema,
+    formatting: 'privacy-first',
+  });
+  if (thirdEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-third-entity',
+      errors: thirdEntityResult.error,
+    });
+  }
+
   const thirdAllowedPaths = thirdPaths.filter(
     keepPathInAllowList(third.paths.allowed)
   );
 
   const firstPathValueList = entityToPathValueList(
-    first.entity,
+    firstEntityResult.value,
     firstAllowedPaths
   );
 
   const secondPathValueList = entityToPathValueList(
-    second.entity,
+    secondEntityResult.value,
     secondAllowedPaths
   );
   const thirdPathValueList = entityToPathValueList(
-    third.entity,
+    thirdEntityResult.value,
     thirdAllowedPaths
   );
   const composedEntity = pathValueListToEntity(id, [
