@@ -69,3 +69,41 @@ type and purpose of the model. Some possible ways are:
     other parts that are unchanged. We can use the fine grained versioning
     to support features such as branching, merging, diffing, and patching
     of parts of the document.
+
+## A more restrictive graphQL
+
+GraphQL is a query language and a runtime for APIs that allows clients to
+specify the data they need. However, GraphQL also introduces some security
+risks that need to be addressed. Here are some reasons why GraphQL can be too
+permissive and flexible on the client side and raise security issues:
+
+-   **Denial-of-Service-Oriented Attacks**: GraphQL allows clients to write
+    complex and nested queries that can consume a lot of resources on the
+    server side. This can lead to performance degradation or even
+    denial-of-service attacks if not properly controlled. Some techniques
+    to mitigate this include limiting query depth, paginating list fields,
+    setting timeouts, and using query cost analysis.
+-   **Lack of Object-Level Authorization**: GraphQL does not have a
+    built-in mechanism for object-level authorization, which means that it
+    does not check whether a user has permission to access a specific
+    object or field. This can result in data leakage or unauthorized
+    modifications if not implemented correctly by the developers. Some
+    techniques to implement object-level authorization include using
+    directives, middleware, or custom resolvers.
+-   **Cross-Site Request Forgery (CSRF)**: GraphQL APIs are vulnerable to
+    CSRF attacks if they do not use proper authentication methods or
+    tokens. CSRF attacks occur when a malicious website tricks a user into
+    sending a request to another website where they are already logged in,
+    without their consent. This can result in unwanted actions or data
+    exposure on the target website. Some techniques to prevent CSRF attacks
+    include using HTTP headers, cookies, or tokens.
+-   **Introspection**: GraphQL provides built-in documentation that tells
+    developers what the fields are, providing a schema of everything you
+    can query. This can expose sensitive information or internal details to
+    malicious actors who can use it to craft malicious queries or exploit
+    vulnerabilities.
+-   **Field Suggestions**: Another usability benefit in GraphQL could also
+    be a potential security concern—field suggestions. These are hints that
+    help developers write queries by suggesting possible fields or
+    arguments. However, this can also leak information about the schema or
+    the data to unauthorized users.
