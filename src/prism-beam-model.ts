@@ -1,56 +1,44 @@
 import {z} from 'zod';
 import {stringFields} from 'faora-kai';
-import {contentTypes} from './content-type-list.js';
 
-const tags = z.array(stringFields.string1To80).min(1).optional();
-const urlTemplate = stringFields.string1To140;
-const roles = z.array(stringFields.string1To80).min(1).optional();
-
-const getHttpAction = z.object({
-  kind: z.literal('http/get'),
-  contentType: z.enum(contentTypes),
-  schemaName: stringFields.string1To50,
-  urlTemplate,
-});
-
-const postHttpAction = z.object({
-  kind: z.literal('http/post'),
-  encodingType: z.enum(contentTypes),
-  schemaName: stringFields.string1To50,
-  urlTemplate,
-});
-
-const putHttpAction = z.object({
-  kind: z.literal('http/put'),
-  encodingType: z.enum(contentTypes),
-  schemaName: stringFields.string1To50,
-  urlTemplate,
-});
-
-const target = z.discriminatedUnion('kind', [
-  getHttpAction,
-  postHttpAction,
-  putHttpAction,
+const tags = z.array(stringFields.string1To80).nonempty().max(30).optional();
+const role = stringFields.string1To80;
+const userId = stringFields.string1To80;
+const dateTime = z.date();
+const operation = z.enum([
+  'read',
+  'create',
+  'update',
+  'upsert',
+  'delete',
+  'search',
 ]);
-
-const action = z.object({
-  name: stringFields.string1To50,
-  target,
-  tags,
-  roles,
-});
 
 export const entity = z.object({
   id: stringFields.string1To140,
 });
 
-export const actionable = z.object({
-  _actions: z.array(action).nonempty().optional(),
-});
-
 const pathValue = z.object({
   path: stringFields.string1To200,
   value: z.union([z.string(), z.number(), z.boolean()]),
+});
+
+const queryContext = z.object({
+  userId,
+  created: dateTime,
+});
+
+const query = z.object({
+  role,
+  operation,
+  tags,
+  ids: z.array(z.number()).nonempty().max(30),
+});
+
+const task = z.object({
+  context: queryContext,
+  queries: z.array(query).nonempty(),
+  entities: z.array(entity).nonempty(),
 });
 
 export type PrismBeamBaseEntity = z.infer<typeof entity>;
@@ -66,7 +54,7 @@ export type PrismBeamTripleEntity = {
   third: PrismBeamBaseEntity;
 };
 
-export type PrismBeamAction = z.infer<typeof action>;
+export type PrismBeamTask = z.infer<typeof task>;
 
 export type PrismBeamPathValue = z.infer<typeof pathValue>;
 type ValidationError = {
