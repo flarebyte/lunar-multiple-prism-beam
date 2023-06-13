@@ -33,6 +33,7 @@ const payloadRef = z.object({
 });
 
 const query = z.object({
+  requestId: stringFields.string1To80,
   role,
   tags,
   refs: z.array(ref).nonempty().max(30),
@@ -42,6 +43,23 @@ const task = z.object({
   context: queryContext,
   queries: z.array(query).nonempty(),
   payloads: z.array(payloadRef).nonempty(),
+});
+
+const responseContext = z.object({
+  created: dateTime,
+  tags,
+});
+
+const payloadResponse = z.object({
+  a: z.literal('entity'),
+  name: stringFields.string1To80,
+  entity,
+  requestId: stringFields.string1To80,
+});
+
+const response = z.object({
+  context: responseContext,
+  payloads: z.array(payloadResponse).nonempty(),
 });
 
 export type PrismBeamBaseEntity = z.infer<typeof entity>;
@@ -58,6 +76,7 @@ export type PrismBeamTripleEntity = {
 };
 
 export type PrismBeamTask = z.infer<typeof task>;
+export type PrismBeamResponse = z.infer<typeof response>;
 
 export type PrismBeamPathValue = z.infer<typeof pathValue>;
 type ValidationError = {
