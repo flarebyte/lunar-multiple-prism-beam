@@ -1,0 +1,298 @@
+import {type Result, succeed, failWith} from 'fairlie-functional';
+import {type ZodSchema} from 'zod';
+import {safeParse} from 'faora-kai';
+import {
+  type PrismBeamPairEntity,
+  type PrismBeamBaseEntity,
+  type PrismBeamError,
+  type PrismBeamTripleEntity,
+} from './prism-beam-model.js';
+import {
+  arePathsInAllowList,
+  getEntityPaths,
+  keepPathInAllowList,
+} from './path-utils.js';
+import {
+  entityToPathValueList,
+  pathValueListToEntity,
+} from './path-value-utils.js';
+
+type MaskedEntity = {
+  schema: ZodSchema;
+  paths: {
+    supported?: Set<string>;
+    allowed: Set<string>;
+  };
+};
+
+type ComposeSingleEntityOpts = {
+  first: MaskedEntity;
+  schema: ZodSchema;
+};
+type ComposePairEntityOpts = {
+  first: MaskedEntity;
+  second: MaskedEntity;
+  schema: ZodSchema;
+};
+
+type ComposeTripleEntityOpts = {
+  first: MaskedEntity;
+  second: MaskedEntity;
+  third: MaskedEntity;
+  schema: ZodSchema;
+};
+
+export const composeSingleEntity = <M extends Record<string, unknown>>(
+  entity: PrismBeamBaseEntity,
+  opts: ComposeSingleEntityOpts
+): Result<M, PrismBeamError> => {
+  const {first, schema} = opts;
+  const firstPaths = getEntityPaths(entity);
+  if (
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
+  ) {
+    return failWith({
+      step: 'compose/first/supported',
+      message:
+        'The entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entity, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'single/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
+  );
+
+  const firstPathValueList = entityToPathValueList(
+    firstEntityResult.value,
+    firstAllowedPaths
+  );
+  const composedEntity = pathValueListToEntity(entity.id, firstPathValueList);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'single/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
+};
+
+export const composeEntityPair = <M extends Record<string, unknown>>(
+  entities: PrismBeamPairEntity,
+  opts: ComposePairEntityOpts
+): Result<M, PrismBeamError> => {
+  const {schema, first, second} = opts;
+  const firstPaths = getEntityPaths(entities.first);
+  const secondPaths = getEntityPaths(entities.second);
+  if (
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
+  ) {
+    return failWith({
+      step: 'compose/first/supported',
+      message:
+        'The first entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    second.paths.supported &&
+    !arePathsInAllowList(second.paths.supported, secondPaths)
+  ) {
+    return failWith({
+      step: 'compose/second/supported',
+      message:
+        'The second entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entities.first, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
+  );
+
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(entities.second, {
+    schema: second.schema,
+    formatting: 'privacy-first',
+  });
+  if (secondEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-second-entity',
+      errors: secondEntityResult.error,
+    });
+  }
+
+  const secondAllowedPaths = secondPaths.filter(
+    keepPathInAllowList(second.paths.allowed)
+  );
+
+  const firstPathValueList = entityToPathValueList(
+    firstEntityResult.value,
+    firstAllowedPaths
+  );
+
+  const secondPathValueList = entityToPathValueList(
+    secondEntityResult.value,
+    secondAllowedPaths
+  );
+  const composedEntity = pathValueListToEntity(entities.first.id, [
+    ...firstPathValueList,
+    ...secondPathValueList,
+  ]);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'pair/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
+};
+
+export const composeEntityTriple = <M extends Record<string, unknown>>(
+  entities: PrismBeamTripleEntity,
+  opts: ComposeTripleEntityOpts
+): Result<M, PrismBeamError> => {
+  const {schema, first, second, third} = opts;
+  const firstPaths = getEntityPaths(entities.first);
+  const secondPaths = getEntityPaths(entities.second);
+  const thirdPaths = getEntityPaths(entities.third);
+  if (
+    first.paths.supported &&
+    !arePathsInAllowList(first.paths.supported, firstPaths)
+  ) {
+    return failWith({
+      step: 'compose/first/supported',
+      message:
+        'The first entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    second.paths.supported &&
+    !arePathsInAllowList(second.paths.supported, secondPaths)
+  ) {
+    return failWith({
+      step: 'compose/second/supported',
+      message:
+        'The second entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  if (
+    third.paths.supported &&
+    !arePathsInAllowList(third.paths.supported, thirdPaths)
+  ) {
+    return failWith({
+      step: 'compose/third/supported',
+      message:
+        'The third entity has paths that are not supported; this is suspicious and should be investigated',
+    });
+  }
+
+  const firstEntityResult = safeParse<PrismBeamBaseEntity>(entities.first, {
+    schema: first.schema,
+    formatting: 'privacy-first',
+  });
+  if (firstEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-first-entity',
+      errors: firstEntityResult.error,
+    });
+  }
+
+  const firstAllowedPaths = firstPaths.filter(
+    keepPathInAllowList(first.paths.allowed)
+  );
+
+  const secondEntityResult = safeParse<PrismBeamBaseEntity>(entities.second, {
+    schema: second.schema,
+    formatting: 'privacy-first',
+  });
+  if (secondEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-second-entity',
+      errors: secondEntityResult.error,
+    });
+  }
+
+  const secondAllowedPaths = secondPaths.filter(
+    keepPathInAllowList(second.paths.allowed)
+  );
+
+  const thirdEntityResult = safeParse<PrismBeamBaseEntity>(entities.third, {
+    schema: third.schema,
+    formatting: 'privacy-first',
+  });
+  if (thirdEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-third-entity',
+      errors: thirdEntityResult.error,
+    });
+  }
+
+  const thirdAllowedPaths = thirdPaths.filter(
+    keepPathInAllowList(third.paths.allowed)
+  );
+
+  const firstPathValueList = entityToPathValueList(
+    firstEntityResult.value,
+    firstAllowedPaths
+  );
+
+  const secondPathValueList = entityToPathValueList(
+    secondEntityResult.value,
+    secondAllowedPaths
+  );
+  const thirdPathValueList = entityToPathValueList(
+    thirdEntityResult.value,
+    thirdAllowedPaths
+  );
+  const composedEntity = pathValueListToEntity(entities.first.id, [
+    ...firstPathValueList,
+    ...secondPathValueList,
+    ...thirdPathValueList,
+  ]);
+  const composedEntityResult = safeParse<M>(composedEntity, {
+    schema,
+    formatting: 'privacy-first',
+  });
+  if (composedEntityResult.status === 'failure') {
+    return failWith({
+      step: 'triple/validate-output',
+      errors: composedEntityResult.error,
+    });
+  }
+
+  return succeed(composedEntityResult.value);
+};
